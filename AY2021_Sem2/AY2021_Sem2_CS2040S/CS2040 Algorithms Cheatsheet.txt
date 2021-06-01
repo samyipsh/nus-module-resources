@@ -1,0 +1,1210 @@
+CS2040 Algorithms List (Pseudocode)
+
+/* Methods to solve recurrence
+1) Continual Substitution
+2) Draw Tree
+3) Master Theorem / Akra Bazzi
+4) Guess and proof (inductive proof) */
+
+//Master Thm: T(n) = aT(n/b) + f(n)
+// f(n) = theta(n^d), where d >= 0
+// a >= 1, b > 1
+// Case 1: a < b^d 	-> 	T(n) = theta(n^d)
+// Case 2: a = b^d 	-> 	T(n) = theta(n^d log n)
+// Case 3: a > b^d 	-> 	T(n) = theta(n^ (log(base b)a)
+
+//SORTING ALGORITHMS 
+/* Binary Search
+Precondition: Array sorted & Array size n
+Postcondition: A[begin] = key
+Loop Invariant: A[begin] <= key <= A[end]
+*/
+int binarySearch(A, key, n) 
+	begin = 0
+	end = n-1
+	while begin < end do:
+		mid = begin + (end-begin)/2
+		if key <= A[mid] then
+			end = miid
+		else begin = mid + 1
+	return (A[begin] == key)? begin: -1
+
+
+/* FindPeak (local non-steep peak found using binarySearch to exclude portions)
+Style: Divide & Conquer
+Postcondition: Array sorted -> A[resIdx-1] <= A[resIdx] <= A[resIdx+1]
+Loop Invariant: Array range always has an accurate LOCAL peak 
+Notes: 
+1) Steep peak (strictly greater than / less than) cannot use Divide & Conquer
+2) Treat array as having infinite elem, as in 
+*/
+FindPeak(A,n) 
+	if A[n/2 + 1] > A[n/2] then
+		FindPeak(A[(n/2)+1...n], n/2)
+	else if A[n/2 - 1] > A[n/2] then
+		FindPeak(A[0...(n/2)-1]), n/2)
+	else A[n/2] is a peak
+		return n/2
+
+/*
+Algorithm: BubbleSort
+Loop Invariant: At end of iteration j, biggest j items are correctly sorted in the final j positions of array (at the back)
+Running Time: O(n^2), Omega(n), Theta(n^2) 
+Stable: Yes
+*/
+
+BubbleSort(A,n) 
+	repeat n times:
+		for j <- 1 to n-1
+			if A[j] > A[j+1] then swap(A[j], A[j+1])
+
+/*
+Algorithm: SelectionSort(A,n)
+Precondition: 
+Postcondition:
+Invariant: 
+Loop Invariant: At end of iteration j, smallest j items are correctly sorted in the final j position of array (at the front)
+Running Time: O(n^2), Theta(n^2), Omega(n^2)
+Stable: No
+*/
+
+SelectionSort(A,n)
+	for j <- 1 to n-1:
+		find minimum elem A[k] in A[j...n]
+		swap(A[j], A[k])
+
+/*
+Algorithm: InsertionSort
+Precondition: 
+Postcondition:
+Invariant: 
+Loop Invariant: At end of iteration j, FIRST j items of array are correctly sorted (may not be final position though) 
+Running Time: O(n^2), Omega(n)
+Stable: Yes
+*/
+
+InsertionSort(A,n)
+	for j <- 2 to n
+		key <- A[j]
+		//Insert key into the sorted array A[1...j-1]
+		i <- j-1
+		while (i > 0) and (A[i] > key)
+			A[i+1] <- A[i]
+			i <- i - 1 //going R to L ensures stability
+		A[i+1] <- key
+
+
+/* MergeSort (Normal) (Space: O(nlogn))
+Variants: Normal, Bottom-up, Recursive Interchange
+Style: Divide and Conquer
+1) Divide prob into sub prob -> Split arr into 2 halves
+2) Recursively solve sub prob -> Sort both halves
+3) Combine soln -> Merge both halves
+Running Time: O(nlogn) 
+Extra Memory: O(n)
+Space Complexity:  O(nlogn)  	[S(n) = 2S(n/2) + n]
+Stable: Yes
+*/
+
+MergeSort(A,n)
+	if (n==1) then return //base case
+	else:  //recursive conquer step
+		X <- MergeSort(A[1...n/2], n/2)
+		Y <- MergeSort(A[n/2+1...n], n/2)
+	return Merge(X,Y,n/2) //combine soln
+
+/*
+Variant: MergeSort (Bottom-up) (Space: O(n))
+Idea: 
+- Merge copies item into tempArray
+- We then copy items back into array A
+Space Complexity: O(n)  	[S(n) = 2S(n/2) + 1]
+*/
+MergeSort(A, begin, end, tempArray)
+	if (begin = end) then return
+	else:
+		mid = begin + (end-begin)/2
+		MergeSort(A, begin,mid, tempArray)
+		MergeSort(A, mid+1, end, tempArray)
+	Merge(A[begin...mid], A[mid+1...end], tempArray)
+	Copy(tempArray, A, begin, end)
+
+/*
+Variant: MergeSort (Recursive Interchange) (Slightly faster, Space: O(n))
+Idea: Using reucrsion tricks to avoid extra copying of data, so a bit faster
+- Initially A & B have copies of unsorted array
+- Switch order of A & B at every recursive call
+Space Complexity:
+*/
+
+MergeSort(A,B, begin,end)
+	if (begin=end) then return
+	else:
+		mid = begin + (end-begin)/2
+		MergeSort(B,A,begin,mid)
+		MergeSort(B,A,mid+1,end)
+	Merge(A,B,begin,mid,end)
+
+/*
+Algorithm: QuickSort (no duplicates)
+Variants: no duplicates, 3 way partitioning (2 ways)
+Style: Divide and Conquer & in-place partitioning
+- Removes combine step due to partition
+1) Divide: Partition arr into 2 subarrays around a pivot x st elem in lower subarr <= x <= elem in upp subarr
+2) Conquer: Recursively sort the 2 sub-arrays
+3) Combined: NONE
+Benefits:
+1) Very fast & in-place algorithm
+2) Many optimizations
+3) Good caching performance
+4) Good parallelism
+Precondition: No duplicates in array, array with n elem, n > 1 (for no duplicate version)
+Invariant: A[high] > pivot
+Loop Invariant: 
+1) for all i >= high, A[i] > pivot
+2) for all 1 < j < low, A[j] < pivot
+Extra space: NONE (in-place algorithm)
+Running Time: 
+==> No duplicates: O(nlogn) 
+==> All duplicates: O(n^2)
+Stable: No (not this version)
+*/
+
+QuickSort(A[1...n], n)
+	if (n == 1) then return
+	else 
+		p = Partition(A[1...n], n)
+		x = QuickSort(A[1...p-1],p-1)
+		y = QuickSort(A[p+1...n], n-p)
+
+Partition(A[n...1],n,pIndex)
+	pivot = A[pIndex]
+	swap(A[1], A[pIndex])
+	low = 2
+	high = n+1 //due to invariant
+	while (low < high)
+		while (A[low] < pivot) and (low < high) do low++
+		while (A[high] > pivot) and (low < high) do high--
+		if (low < high) then swap (A[low], A[high])
+	swap(A[1], A[low-1])
+	return low-1
+
+
+/*
+Algorithm: QuickSort (allow duplicates)
+Style: 3-way partioning
+Option 1) 2 pass partioning
+Option 2: 1 pass partioning
+Precondition: 
+Postcondition:
+Invariant: 
+1) Each region has proper elements (< pivot, = pivot, > pivot)
+2) Each iteration, In progress region decreases by 1
+Running Time: 
+-> Random pivot -- O(nlogn)
+-> Deterministic quicksort [T(n) = T(n-1) + T(1) + n] -- O(n^2)
+*/
+
+
+QuickSort(A[1...n], n)
+	if (n == 1) then return
+	else 
+		pIndex = random(1,n) //Choose pivot index pIndex
+		p = 3WayPartition(A[1...n], n, pIndex)
+		x = QuickSort(A[1...p-1],p-1)
+		y = QuickSort(A[p+1...n], n-p)
+
+
+END GOAL (3 way partioning): [<= x][x,..,x][>= x]
+
+Option 1) 2 pass partioning
+- Regular partioning
+- Pack duplicates (using swaps)
+
+Option 2) Standard Implementation
+- Standard soln
+- Maintain 4 regions of the array
+
+-regions: [<= x] [PIVOT] [IN PROGRESS] [>= x]
+if (A[curr] < pivot) {
+	Increment low
+	Swap(A[curr], A[low])
+	Increment curr
+} else if (A[curr] = pivot) {
+	Increment curr
+} else if (A[curr] > pivot) {
+	Swap(A[curr], A[high])
+	Decrement high
+}	
+
+/*QuickSort Optimizations
+In practice, more efficient to recurse into smaller half first
+- Less to store on call stack
+1) Base case: Half recursion early, leave small arrays unsorted and perform InsertionSort
+-> InsertionSort very fast on almost sorted arrays
+*/
+
+
+/* Order Statistics 
+Postcondition: elem in A[1:k-1] < res
+Invariant:
+Running Time: O(n) [T(n) = T(n/2) + n]
+*/
+
+QuickSelect(A[1...n],n,k)
+	if (n==1) then return A[1]
+	else Choose random pivot index pIndex
+		p = partition(A[1...n],n,pIndex)
+		if (k == p) then return A[p]
+		else if (k < p) then
+			return QuickSelect(A[1...p-1],k)
+		else if (k > p) then
+			return QuickSelect(A[p+1...n],k-p)
+//TREES
+/* Binary Search Tree (BST) Runtime Summary: 
+1) Modify Operations: 
+--> insert, delete -- O(h), h = logn
+2) Query Operations: 
+--> search, predecessor/successor, findMax/findMin -- O(h), h = logn
+--> traversals -- O(n)
+
+/*
+Algorithm: Tree Traversal
+Variant: In-order (LNR), Pre-order (NLR), Post-order (LRN) 
+Variant's note: 3 orders have LR, just insert N iniside to permute
+Style: Recursive wishful thinking 
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: O(n)
+*/
+
+void inOrderTraversal() {
+	if (leftTree != null) {
+		leftTree.inOrderTraversal(); 
+	} 
+	visit(this);
+	if (rightTree != null)
+		rightTree.inOrderTraversal();
+}
+
+/*
+Algorithm: Insert
+Style: Only inserts at leaf, grows leaf downward
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: O(h), h = logn
+*/
+
+public void insert(int insKey, int insVal) {
+	if (insKey < key) {
+		if (leftTree != null) {
+			leftTree.insert(insKey, insVal);
+		} 
+		else leftTree = new TreeNode(insKey, insVal);
+	}
+	else if (insKey > key) {
+		if (rightTree != null) {
+			rightTree.insert(insKey, insVal)
+		}
+		else rightTree = new TreeNode(insKey, insVal);
+	}
+	else return; //key alr in tree
+}
+
+/*
+Algorithm: Successor 
+Idea: Break down into cases
+1) Search for key in tree
+2) if (res > key) return res
+3) if (res <= key) search for successor of res
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: O(h), h = logn
+*/
+
+public TreeNode successor() {
+	if (rightTree != null) { //base case
+		return rightTree.searchMin() //searchMin juz recurses left all the way 
+	}
+	TreeNode parent = parentTree; 
+	TreeNode child = this;
+	while ((parent!=null) && (child == parent.rightTree)) {
+		child = parent;
+		parent = child.parentTree;
+	}
+	return parent; //note: if no successor, will return null
+}
+
+
+/*
+Algorithm: Delete
+Idea: Break down into cases
+Case 1) No children 
+Case 2) 1 child 
+Case 3) 2 children 
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: O(h), h = logn
+*/
+
+delete(key) 
+	TreeNode v = search(key)
+	if (v.children = 0) //case 1: v has no children
+		remove v
+	else if (v.children = 1) //case 2: v has 1 child
+		remove v
+		connect child to parent
+	else if (v.children = 2) //case 3: v has 2 children
+		x = successor(v)
+		delete(x)
+		remove(v)
+		connect x to left(v), right(v), parent(v)
+
+/*Proof that successor of v has at most 1 child, therefore easy to delete
+- Del node has 2 children
+- Del node has R child
+- succsor() = right.findMin()
+- min elem has no left child
+*/
+
+/* Balanced Trees
+Step 0: Augment
+Step 1: Define Balance Condition
+Step 2: Maintain Balance*/
+
+/*AVL Trees
+Invariant: Node v is balanced if |v.left.ht - v.right.ht| <= 1
+*/
+
+/*
+Algorithm: Right-rotate -- Left-rotate
+Idea: Assign parents, then assign children 
+(don't 'let go' of node completely, must have at least 1 ref)
+Precondition: 
+Postcondition: Node has a left child -- Node has a right child
+Invariant: 
+Running Time: O(1)
+*/
+right-rotate(v)
+	w = v.left
+	w.parent = v.parent
+	v.parent = w
+	v.left = w.right
+	w.right = v
+
+left-rotate(v)
+	w = v.right
+	w.parent = v.parent
+	v.parent = w
+	v.right = w.left
+	w.left = v
+
+/*
+Algorithm: insert
+Style: Update height, use tree rotations to restore balance if need be (max 2 rotations)
+1) n > 2^(h/2)
+2) h < 2logn
+Running Time: O(logN)
+*/
+
+insert(x)
+	if (x < key)
+		left.insert(x)
+	else right.insert(x)
+	height = max(left.height + right.height) + 1
+
+if v is unbalanced & left heavy
+	if (v.left is balanced || v.left is left heavy) then
+		right-rotate(v)
+	else if (v.left is right-heavy) then
+		left-rotate(v.left)
+		right-rotate(v)
+
+
+
+/*
+Algorithm: Delete
+Running Time: O(logN)
+*/
+
+1) if v has 2 children, swap it with its successor
+2) Delete node v from binary tree (& reconnect children)
+3) For every ancestor of deleted node:
+	Check if its height balanced
+	If not perform a rotation
+	Continue to root
+
+*May take up to O(logn) rotations
+
+/* Red-Black Trees
+- More loosely balanced
+- AVL trees provide faster search than Red Black Trees because they are more strictly balanced.
+- Red Black Trees provide faster insertion and removal operations than AVL trees 
+as fewer rotations are done due to relatively relaxed balancing.
+*/
+
+/* Skip Lists & Treaps
+- Randomized data structures
+- Random insertions => balanced tree
+*/
+
+/* Trie
+- Trie use more space (O(Sum of length of words))
+- BST & Trie uses O(text size) space but trie has more nodes and more overhead
+Idea:
+- Root to path represents string
+- Terminating node or terminating field indicates when word ends
+Search: O(L)
+Storing 1 try: O((size of text) * overhead)
+-> generally faster, independent of size of total text & number of strings
+*/
+
+AUGMENTED TREES
+/* Basic Methodology
+1) Choose underlying data structure (tree, hash table, linked list, stack, etc.)
+2) Determine additional info needed
+3) Modify data stucture to maintain additional info when structure changes
+4) Develop new operations */
+
+ORDER STATISTICS /* (store weight)
+- Select(kth), rank(node)
+Without augmenting: O(k + logn) //log(n) to recurse to k = 1 bfr inordertraveral starts
+Idea: 
+- Store weight (size of subtree) in every node
+- Every recursion to R child would decrease k [k - (w(left)+1)]
+- Maintain weight during insertions by maintaining weight during rotation (draw diagram)
+*/
+
+/*
+Algorithm: Select (in Augmented Tree)
+Running Time: O(logn)
+*/
+Select(k)
+	rank = left.weight + 1
+	if (k == rank) then 
+		return val
+	else if (k < rank) then
+		return left.select(k)
+	else if (k > rank) then
+		return right.select(k-rank)
+/* 
+Algorithm: Rank
+Running Time: O(logn) 
+*/
+rank(node)
+	rank = node.left.weight + 1
+	while (node!= null) do
+		if node is leftchild then 
+			do nothing
+		else if node is rightchild then
+			rank += node.parent.left.weight + 1 //adding rank of parent 
+		node = parentnode
+	return rank
+
+INTERVAL SEARCH /*
+- Sorted by left endpt
+- Store maximum endpt in subtree in node 
+- Maintain max during rotation (draw diagram)
+*/
+
+/* 
+Algorithm: Interval-insert [O(log n)]
+- Insert by left root
+- Update max recursively up / otw down
+- if out-of-blanace then rotate 
+*/
+
+/* 
+Algorithm: Interval-search [O(log n)]
+(returns valid interval not smallest interval)
+*/
+intervalSearch(x)
+	c = root;
+	while (c!== null and x is not in c.interval) do
+		if (c.left == null) then
+			c = c.right
+		else if (x > c.left.max) then
+			c = c.right
+		else c = c.left
+	return c.interval
+
+/* Proof of correctness (for intervalSearch)
+1) recurse right cannot be wrong
+2) if recursing left, consider node interval with maximum endpt k2
+- x < k2
+- if x >= k1, then x in interval
+- if x < k1, then x would be smaller than all left pt of nodes in R-subtree */
+
+ORTHOGONAL RANGE SEARCHING/* 
+- Use a BST
+- Store all points in the leaves of the tree (internal nodes only store copies)
+- Each internal node v stores the MAX of any leaf in the LEFT subtree
+-> with exception of leafs, follow BST property
+Extra: Can be done using AVL tree w augmented weight (Q7 Mids)
+*/
+
+/* Query Algo (find number of points in range)
+- Find split node v (node withing range)
+- Do left traversal on v.left
+- Do right traversal on v.right
+
+=> Build: O(nlogn)
+Space Complexity: O(n)
+How many points in range: O(logn)
+*/
+
+FindSplit(low,high)
+	v = root
+	done = false
+	while (!done) 
+		if (high <= v.key) then (v = v.left) //v.key too high
+		else if (low > v.key) then (v = v.right) //v.key too low
+		else (done = true)
+	return v
+
+//everything on right subtree will be above lower bound
+RightTraversal(v, low, high) //key value increase
+	if (v.key <= high) //key still lower than upp bound?
+		all-leaf-traversal(v.left)
+		RightTraversal(v.right, low, high)
+	else  //if not check if left child within upp bound
+		RightTraversal(v.left, low, high)
+
+//everything in left subtree will be under upp bound
+LeftTraversal(v, low, high) //key value decrease
+	if (low <= v.key)  //key still above lower bound?
+		all-leaf-traversal(v.right)
+		leftTraversal(v.left, low, high)
+	else //if not check if right child above lower bound
+		leftTraversal(v.right, low, high)
+
+//HASHING
+/*Open Addressing
+Prob: Not indep of other keys (not unfirom hashing assumption)
+Prob: Clusters, when a cluster forms, high prob h(k) will hit it and make it bigger
+Cluster size: Theta(logn)
+*/
+hash-search(key)
+	int i = 1
+	while (i <= m) 
+		int bucket = h(key, i)
+		if (T[bucket]==null) //empty bucket
+			return key not found
+		if (T[bucket].key == key) //full bucket
+			return T[bucket].data
+		i++
+	return key not found
+		if (T[bucket.key == key])
+
+hash-delete(key)
+1) Find key to delete
+2) Remove it from table
+3) Set bucket to DELETED //Tombstone value
+
+//GRAPHS
+/* 
+BFS
+Idea: Frontier by frontier, Queue (FIFO) based
+Running Time: O(V+E)
+*/
+
+BFS(Node[] nodeList, int startId) {
+	boolean[] visited = new boolean[nodeList.length];
+	Arrays.fill(visited, false); //initialize & reset everything to default false
+
+	int[] parent = new int[nodelist.length]; //keep track of parent node so can recursively find path later
+	Arrays.fill(parent, -1);
+
+	Collection<Integer> frontier = new Collection<Integer>; //FIFO Queue
+	frontier.add(startId); //first frontier starts of w {startNode}
+
+	//main code goes here
+
+	while (!frontier.isEmpty()){
+		Collection<Integer> nextFrontier = new … ;
+		for (Integer v : frontier) {
+			for (Integer w : nodeList[v].nbrList) {
+				if (!visited[w]) {
+					visited[w] = true;
+					parent[w] = v;
+					nextFrontier.add(w);
+				}
+			}		
+		}
+		//can store number of elem in frontier if you want here
+		frontier = nextFrontier
+}
+
+/* 
+DFS
+Idea: Stack (LIFO) based
+Running Time: O(V+E)
+*/
+DFS(Node[] nodeList) {
+	boolean[] visited = new boolean[nodeList.length];
+	Arrays.fill(visited,false);
+
+	for (start = i; start<nodeList.length; start++) {
+		if (!visited[start]) {
+			visited[start] = true;
+			//ProcessNode() here if PRE-ORDER 
+			DFSVisit(nodeList, visited, start);
+			//ProcessNode() here if POST-ORDER
+		}
+	}
+}
+
+DFSVisit(Node[] nodeList, boolean[] visited, int startId) {
+	for (Integer v: nodeList[startId].nbrList) {
+		if (!visited[v]) {
+			visited[v] = true;
+			DFS-visit(nodeList,visited, v);
+		}
+	}
+}
+
+//DFS Post Order <-> Topological Order 
+DFS(Node[] nodeList) {
+	boolean[] visited = new boolean[nodeList.length];
+	Arrays.fill(visited,false);
+
+	for (start = i; start<nodeList.length; start++) {
+		if (!visited[start]) {
+			visited[start] = true;
+			DFSVisit(nodeList, visited, start);
+			schedule.prepend(v); //added last!
+		}
+	}
+}
+
+DFSVisit(Node[] nodeList, boolean[] visited, int startId) {
+	for (Integer v: nodeList[startId].nbrList) {
+		if (!visited[v]) {
+			visited[v] = true;
+			DFS-visit(nodeList,visited, v);
+			schedule.prepend(v); //added last in every iteration
+		}
+	}
+}
+
+/*SSSP - Weighted Graph
+SETUP: Adjecency List stores (Weight, EndVertex) pairs
+KEY PROPERTY:
+1) Triangle inequality: d(S,C) <= d(S,A) + d(S,C)
+2) Any subpath of shortest path is also shortest path of those 2 pts
+
+*/
+
+/* 
+Algorithm: Bellman-Ford  (Single Source Shortest Path)
+Idea:
+-> Repeat |V| times: relax every edge,
+-> Stop when converges (Terminate early |E| relax operations no effect)
+Cases:
+1) Negative Weight Cycles 
+-> Infinitely negative weight. Detect by looping |V| times see if |V|th time changes
+2) All edges same weight: use BFS
+LOOP INVARIANT: After n iterations, n hop estimate is correct (so |V|-1 iterations sufficient)
+Invariant: Estimate >= Distance
+Running Time: O(VE)
+*/
+
+//maintain estimate for each distance, gradually reduce estimate
+int[] dist = new int[V.length];
+Arrays.fill(dist, INFTY);
+dist[start] = 0; //start of knowing 1 shortest path
+
+relax(int u, int v) {
+	if (dist[v] > dist[u] + weight(u,v)) 
+		dist[v] = dist[u] + weight(u,v);
+}
+
+//Bellman-Ford Algo
+n = V.length;
+for (i = 0; i < n; i++) 
+	for (Edge e : graph)
+		relax(e)
+
+/* One pass Bellman Ford O(V+E)
+Soln 1) Get Topological Ordering and then relax 
+-> DFS: Post-order to get topo ordering (algo on top w DFS stuff)
+-> Process each node when its LAST visited
+
+Soln 2) Kahn's Algorithm
+-> ALTERNATIVE O(V+E) algo to One-pass Bellman Ford (Dijkstra)
+-> Also using following topo order logic
+Idea:
+-> S = all nodes in G w no incoming edges
+-> Add nodes to topo-order
+-> Remove all edges adjacent to nodes
+-> Remove nodes in S from graph
+
+1) iterate through all edges, keep track of no. of incoming edges for each node
+2) enqueue all nodes w 0 incoming edges
+*/
+while (!Queue.isEmpty) //Queue of nodes with no incoming edges
+	dequeue vertex
+		if visited:
+			continue
+		else:
+			incomingEdges[u]-- //decrement in-degree for all neighboring nodes
+			if incomingEdges[u] == 0:
+			enqueue[u]
+			visited[u] = true
+
+/* 
+Algorithm: Djikstra's Algorithm
+Assumptions:
+-> No non-negative edges (so extending a path does not make it shorter)
+(Cannot easily be reweighted)
+Idea:
+-> Relax the edges in the "right" order
+DATA STRUCTURE: 
+=> Maintain (Vertext & Dist): AVL Tree  
+- indexed by: Priority
+- deleteMin()
+- insert(key, priority)
+- contains()
+- decreaseKey(key, priority)
+=> To find a Vertex: Hash Table
+- Map keys to locations in the binary tree
+- Update hash table whenever binary tree changes
+Precondition: 
+Postcondition:
+LOOP INVARIANT: Every "finished" vertex has correct estimate.
+Aka - Every min fringe vertice that gets added to Shortest Path is correct
+Reason: If there was a shorter path to that vertice bypassing that edge, it would
+have to go through other fringe  vertices, which has higher weight, therefore cant be the case
+unless there was negative weights.
+Running Time: O((V+E)log V) = O(E Log V)  //AVL Tree
+- insert(key, priority): O(logn)
+- deleteMin(): O(logn)
+- decreaseKey(key, priority): O(logn)
+- contains(key): O(1)
+*/
+
+-> Maintain distance estimate for every node
+-> Begin with empty shortest path tree
+-> Repeat:
+	- Consider vertex with minimum estimate
+	- Add vertex to shortest-path-tree 
+	- Relax all outgoing edges
+
+public Dijkstra {
+	private Graph G;
+	private IPriorityQueue pq = new PriQueue();
+	private double[] distTo;
+
+	searchPath(int start) {
+		pq.insert(start, 0.0);
+		distTo = new double[G.size()];
+		Arrays.fill(distTo, INFTY);
+		distTo[start] = 0;
+		while (!pq.isEmpty()) {
+			int w = pq.deleteMin(); //run |V| times
+			for (Edge e : G[w].nbrList) //|E| times, each edge relaxed once
+				relax(e) 			
+		}
+	}
+}
+
+relax(Edge e) {
+	int v = e.from();
+	int w = e.to();
+	double weight = e.weight();
+	if (distTo[w] > distTo[v] + weight) {
+		distTo[w] = distTo[v] + weight;
+		parent[w] = v;
+		if (pq.contains(w))		//O(1)
+			pq.decreaseKey(w, distTo[w]);	//O(log V))
+		else
+			pq.insert(w, distTo[w]);		//O(log V)
+	}
+}
+
+
+//Binary Heap / Fibonacci Heap
+//O(logn) for all operations but without overheads so faster real cost
+//compared to AVL no rotations
+//better concurrency
+
+//Store Tree in Array
+left(x) = 2x + 1; 
+right(x) = 2x + 2;
+parent(x) = floor((x-1)/2)
+/*AVL cannot be stored as 
+1) rotate exp (no longer juz reassignment of pointers which is O(1))
+2) gaps in tree leads to high space usage
+*/
+
+/* 
+Algorithm: insert
+Running Time:CO(logn)
+1) Add new leaf
+2) bubbleUp
+*/
+
+insert(Priority p, Key k) {
+	Node v = completeTree.insert(p,k)
+	bubbleUp(v);
+}
+
+bubbleUp(Node v) {
+	while (v != null) {
+		if (priority(v) > priority(parent(v)))
+			swap(v, parent(v))
+		else return;
+		v = parent(v);
+	}
+}
+
+/* 
+Algorithm: decreaseKey
+Running Time: O(logn) 
+1) Update priority
+2) bubbleDown (depends on which child is bigger
+( -> as that child needs to replace largest elem)
+*/
+
+bubbleDown(Node v) 
+	while (!leaf(v)) {
+		leftP = priority(left(v));
+		rightP = priority(right(v));
+		maxP = max(leftP, rightP, priority(v));
+		if (leftP == max) {
+			swap(v, left(v))
+			v = left(v); }
+		else if (right P == max) {
+			swap(v,right(v));
+			v = right(v) }
+		else return;
+	}
+
+/* 
+Algorithm: Delete
+Running Time: O(logn)
+1) swap(v, last())
+2) remove(last(v))
+3) bubbleDown
+*/
+
+/* 
+Algorithm: Extractmax() 
+Running Time: O(logn)
+1) Node v = root;
+2) delete(root)
+*/
+
+
+/* HeapSort Algorithm
+Idea: 2 Conversions
+- UNSORTED list -> Heap -> SORTED list
+Notes:
+- Faster than MergeSort, Little slower than QuickSort 
+- Deterministic: always completes in O(nlogn) (unlike randomized algo)
+- Unstable
+- In-place: only need n space
+Running Time: O(nlogn)
+*/
+
+/* UNSORTED -> HEAP
+Naive mtd: Keep inserting into empty heap
+Better mtd: Recursion
+Base case: All leaves are heaps
+Inductive Step: Solve for heap hat have children that are heaps (bubbleDown root)
+Analysis :(O(n) = n/2 + n/4 + n/8 + ... + 1)
+-> BECAUSE most nodes have small ht (n/2 nodes have 0 ht, n/4 nodes have 1 ht...)
+
+*/
+
+//int[] A = array of unsorted integers 
+for (int i = (n-1); i >= 0; i--) { //after i bubble downs, i largest elem will be correctly placed in heap
+	bubbleDown(i, A); //O(logn)
+}
+
+//HEAP -> SORTED (O(nlogn))
+//int[] A = array that stores a heap
+for (int i = (n-1); i >= 0; i--) {
+	int value = extractMax(A);
+	A[i] = value; //Good space usage, In-place
+}
+
+//MAZESL (1) Pre-process (2) Answer Queries
+//idea: group into sets
+//2 queries: isConnected(y,z) & union(x,y)
+
+_Summary_
+Algo 			: find-time : union-time
+Quickfind 		: O(1)		: O(n)
+QuickUnion		: O(n)		: O(n)
+WeightedUnion 	: O(log n)	: O(log n) 
+PathCompression : O(log n)	: O(log n)
+(WeightedUnion &
+PathCompression): a(m,n)	: a(m,n)
+
+
+/* Quick Find 
+- Tree is flat
+- Union is exp */
+find(int p, int q) 
+	return (componentId[p] == componentId[q])
+
+union(int p, int q) 
+	updateComponent = componentId[q]
+	for (int i = 0; i < componentId[]) {
+		if (componentId[i] == updateComponent) 
+			componentId[i] = componentId[p]
+	}
+
+/*QuickUnion
+- Tree is too tall
+- Union & find are expensive */
+find(int p, int q)
+	while(parent[p] != p) p = parent[p]
+	while(parent[q] != q) q = parent[q]
+	return (p == q)
+
+union(int p, int q)
+	while(parent[p] != p) p = parent[p]
+	while(parent[q] != q) q = parent[q]
+	parent[p] = q
+
+/*Weighted Union
+- Idea: join smaller set into larger set to decrease height
+- Max depth: O(logn) */
+union(int p, int q)
+	while(parent[p] != p) p = parent[p]
+	while(parent[q] != q) q = parent[q]
+	if (size[p] > size[q]) {
+		parent[q] = p //link q to p
+		size[p] += size[q]
+	} else {
+		parent[p] = q
+		size[q] += size[p]
+	}
+
+/*Path Compression
+- Idea: After finding root: set parent of each traversed node to the root */
+findRoot(int p) {
+	root = p;
+	while (parent[root] != root) root = parent[root];
+	while (parent[p] != p) {
+		temp = parent[p]
+		parent[p] = root
+		p = temp
+	}
+	return root
+}
+
+MST Algorithms Part I
+/*Properties of MST
+1) No cycles
+2) If you cut a MST, both pieces are MST
+3) Cycle Property: 
+	If there is a cycle, maximum weighted edge is not in MST
+4) Cut Property:
+	For every partition of nodes, min weight edge is in MST
+*/
+
+MST Algorithms Part II 
+//For ROOTED Directed Acyclic MST (Special case) [O(E)]
+-> For each node w exception of root, add min incoming edge
+
+(UNDIRECTED MST) => all bout relative edge weights
+/* 
+Prim's Algo (ALL BLUE RULE)
+1) Maintain set of visited nodes
+2) Greedily grows set by adding node connected via lightest edge
+3) Use PQ to order nodes by edge weight (Dijkstra orders by estimateDist)
+
+--> Analysis [O(E log V)]
+- Every vertex added & removed once from pQ 	- O(V log V)
+- Each edge in final MST underwent a decreaseKey- O(E log V)
+
+*if all edges have weight from {1...10} [O(E)]
+- use arr of size 10 as a PQ (A[j] has linked list of (edges weight j)
+*/
+
+//Initialize pQ
+PriorityQueue pq = new PriorityQueue();
+for (Node v : G.V()) { 
+	pq.insert(v, INFTY);
+}
+pq.decreaseKey(start,0); //STORES NODE AND INCOMING EDGE WEIGHT
+
+//Initialize set S
+HashSet<Node> S = new HashSet<Node>();
+S.put(start);
+//Initialize parent Hash Table
+HashMap<Node,Node> parent = new HashMap<Node, Node>();
+parent.put(start, null);
+//Prim's Algo
+while (!pq.isEmpty()) {
+	Node v = pq.deleteMin();
+	S.put(v);
+	for each (Edge e : v.edgeList()) {
+		Node w = e.otherNode(v);
+		if (!S.get(w)) { //if it hasnt been visited, update its incoming edge weight
+			//ASSUME decreaseKey does nothing if new weight is larger than old weight
+			if (pq.decreaseKey(w, e.getWeight())) { //if can decrease, set a parent link
+				parent.put(w,v); //lowest edge weight and correct parent will end up being assigned last
+			}	
+		}
+	}
+}
+
+/* 
+Kruskal's Agorithm (ALL RED RULE - SORTA)
+1) Sort edges by weight from smallest to biggest
+2) Consider edges in ascending order
+	- if both endpts in the same blue cycle tree, then color edge red 
+	(-> would be heaviest edge in cycle)
+	- Otherwise color the edge blue
+Data Structure: Union-find (binary heap)
+-> Need to connect blue nodes if in same tree
+
+Analysis: [O(E log V)]
+- Sorting: O(E log E) = O(E log V) //E = O(V^2)
+- For E edges:
+	- Find 	: O(a(n)) or O(log V)
+	- Union : O(a(n)) or O(log V)
+
+*if all edges have weight from {1...10} [O(aE)]
+- use arr of size 10 to sort array in O(E) 
+-> A[j] holds linked list of (edges of weight j)
+*/
+
+//Sort edges and initialize
+Edge[] sortedEdges = sort(G.E());
+ArrayList<Edge> mstEdges = new ArrayList<>();
+UnionFind uf = new UnionFind(G.V());
+
+//Iterate through all the edges, in order
+for (int i=0; i < sortedEdges.length; i++) {
+	Edge e = sortedEdges[i];
+	Node v = e.one(); 
+	Node w = e.two();
+
+	if (!uf.find(v,w)) { //if not in same tree
+		mstEdges.add(e); 
+		uf.union(v,w);
+	}
+}
+
+/* 
+Boruvka's Algo (input: connected, weighted, undirected graph)
+=> Repeat: add all "obvious" blue edges (min adj edge)
+1 Boruvka Step: 
+	- for EACH connected component search for min weight outgoing edge
+	- Add selected edges
+	- Merge connected components
+
+After every step, at most n/2 connected components)
+-> at most (log V) boruvka steps 
+
+Modern Requirements: Parallizable, 
+					:Faster in "good" graphs (eg. planar graphs) 
+					:Flexible
+
+--> Analysis O((V+E) log V) = [O(E log V)]
+(After every Boruvka step, at least k/2 edges added)
+(						at least k/2 components merged)
+(						at most n/2 connected components left)
+
+*If edges have same weight use DFS/BFS to get MST
+*/
+
+//Initialize: for each node: store a component identifier
+	- create n connected components (one for each node) //O(V)
+
+1 Boruvka Step: //O(V+E)
+	- For each connected component search for min weight outgoing edge
+	(traverse using DFS/BFS)
+	- Add selected edges
+	- Merge connected components 
+	(update component IDs, mark added edges) //O(V) to scan every node
+
+
+MAXMIMUM SPANNING TREE
+Soln 1) reverse sign of each edge weight, run MST
+Soln 2) Run kruskal in reverse
+
+
+
+
+Steiner Tree problem (NP-hard)
+//MST of subset of vertices
+//Required nodes & Steiner Nodes
+
+Good Efficient Approximation //T < 2*OPT(G)
+1. For every pair of required vertices (v,w) 
+		calculate the shortest path from v to w
+	- Use dijkstra V times
+	- Or use All-Pairs-Shortest-Paths
+2. Construct new graph on required nodes
+	- V = required nodes
+	- E = shortest path distances
+3. Run MST on new graph
+	- MST gives edges on new graph
+4. Map new edges back to original graph
+	- Following shortest path in step 1
+	- Skip duplicate edges
+
+-=DYNAMIC PROGRAMMING=-
+1) Divide into sub problems     (Property 1: Optimal Sub-structured)
+2) MEMOIZED Conquer of problems (Property 2: Overlapping Sub-problems) 
+
+/* 
+Algorithm: LIS (Longest Increasing Subsequence)
+Style: DP 
+1) Subproblem 	: S[i] = LIS(A[1...n])
+2) Solve 		: S[i] = max of all elem before it if elem is smaller than it 	
+Running Time: O(n^2) //can do better using binary serach O(nlogn)
+*/
+
+LIS(int[] arr) {
+    int[] subProb = new int[arr.length]; //subProb[i] = LIS_till_i
+
+    for (int i = 0; i < arr.length; i++) {
+        int max = -1;
+        for (int j = 0; j < i; j++) {
+            if (arr[j] < arr[i]) { //if can be connected (less than)
+                if (subProb[j] > max) max = subProb[j];
+            }
+        }
+        int res = (max == -1)? 1: max + 1;
+        subProb[i] = res;
+    }
+    return subProb[arr.length - 1];
+}
+
+/* 
+Algorithm: 
+Style:
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: 
+*/
+
+/* 
+Algorithm: 
+Style:
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: 
+*/
+/* 
+Algorithm: 
+Style:
+Precondition: 
+Postcondition:
+Invariant: 
+Running Time: 
+*/
+
